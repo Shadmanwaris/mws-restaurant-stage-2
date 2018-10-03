@@ -10,14 +10,17 @@ var paths = {
     srcHTML: 'src/**/*.html',
     srcCSS: 'src/**/*.css',
     srcJS: 'src/**/*.js',
+    srcIMG: 'src/**/*.jpg',
     tmp: 'tmp',
     tmpIndex: 'tmp/index.html',
     tmpCSS: 'tmp/**/*.css',
     tmpJS: 'tmp/**/*.js',
+    tmpIMG: 'src/**/*.jpg',
     dist: 'dist',
     distIndex: 'dist/index.html',
     distCSS: 'dist/**/*.css',
-    distJS: 'dist/**/*.js'
+    distJS: 'dist/**/*.js',
+    distIMG: 'src/**/*.jpg',
   };
 
 gulp.task('default', function () {
@@ -36,7 +39,11 @@ gulp.task('js', function () {
     return gulp.src(paths.srcJS).pipe(gulp.dest(paths.tmp));
 });
 
-gulp.task('copy', ['html', 'css', 'js']);
+gulp.task('img', function () {
+    return gulp.src(paths.srcIMG).pipe(gulp.dest(paths.tmp));
+});
+
+gulp.task('copy', ['html', 'css', 'js', 'img']);
 
 gulp.task('inject', ['copy'], function () {
     var css = gulp.src(paths.tmpCSS);
