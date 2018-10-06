@@ -57,9 +57,13 @@ gulp.task('inject', ['copy'], function () {
 gulp.task('serve', ['inject'], function () {
     return gulp.src(paths.tmp)
       .pipe(webserver({
-        port: 3000,
+        port: 3001,
         livereload: true
       }));
+});
+
+gulp.task('watch', ['serve'], function () {
+    gulp.watch(paths.src, ['inject']);
 });
 
 gulp.task('default', ['watch']);

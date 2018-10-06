@@ -20,7 +20,6 @@ self.addEventListener('install', function (event) {
               '/img/8.jpg',
               '/img/8.jpg',
               '/img/10.jpg',
-              '/data/restaurants.json',
               '/css/styles.css'
             ]);
         })
@@ -50,3 +49,5 @@ self.addEventListener('fetch', function (event) {
         })
     );
 });
+
+

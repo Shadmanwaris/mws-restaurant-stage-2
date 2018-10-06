@@ -1,3 +1,52 @@
+
+const idbApp = (function () {
+  'use strict';
+
+  if (!navigator.serviceWorker) {
+    console.log('Exited idbApp due to no service worker installed.');
+    return Promise.resolve();
+  }
+
+  const dbPromise = idb.open('restaurantreviews', 1, function (upgradeDb) {
+    switch (upgradeDb.oldVersion) {
+      case 0:
+        upgradeDb.createObjectStore('restaurants', {
+          keyPath: 'id'
+        });
+    }
+  });
+
+  function addRestaurantById(restaurant) {
+    return dbPromise.then(function (db) {
+      const tx = db.transaction('restaurants', 'readwrite');
+      const store = tx.objectStore('restaurants');
+      store.put(restaurant);
+      return tx.complete;
+    }).catch(function (error) {
+      // tx.abort();
+      console.log("Unable to add restaurant to IndexedDB", error);
+    });
+  }
+
+  function fetchRestaurantById(id) {
+    return dbPromise.then(function (db) {
+      const tx = db.transaction('restaurants');
+      const store = tx.objectStore('restaurants');
+      return store.get(parseInt(id));
+    }).then(function (restaurantObject) {
+      return restaurantObject;
+    }).catch(function (e) {
+      console.log("idbApp.fetchRestaurantById errored out:", e);
+    });
+  }
+
+  return {
+    dbPromise: (dbPromise),
+    addRestaurantById: (addRestaurantById),
+    fetchRestaurantById: (fetchRestaurantById),
+  };
+})();
+
 /**
  * Common database helper functions.
  */
@@ -15,17 +64,29 @@ class DBHelper {
   /**
    * Fetch all restaurants.
    */
+  // static fetchRestaurants(callback) {
+  //   const t =`${DBHelper.DATABASE_URL}`;
+  //   fetch(t).then(t => {
+  //     200 === t.status ? t.json().then(t=>{
+  //       callback(null, t)
+  //     }).catch(t => {
+  //       callback(t, null)
+  //     }) : callback(`Request failed ${t.status}`,null)
+  //   }).catch(t => {
+  //     callback(t, null)
+  //   })
+  // }
+
   static fetchRestaurants(callback) {
-    const t =`${DBHelper.DATABASE_URL}`;
-    fetch(t).then(t => {
-      200 === t.status ? t.json().then(t=>{
-        callback(null, t)
-      }).catch(t => {
-        callback(t, null)
-      }) : callback(`Request failed ${t.status}`,null)
-    }).catch(t => {
-      callback(t, null)
-    })
+    fetch(DBHelper.DATABASE_URL)
+      .then(response => response.json())
+      .then(function (jsonResponse) {
+        callback(null, jsonResponse);
+      })
+      .catch(function (error) {
+        const errorMessage = (`Request failed. Returned status of ${error}`);
+        callback(errorMessage, null);
+      });
   }
 
   /**
@@ -33,16 +94,29 @@ class DBHelper {
    */
   static fetchRestaurantById(id, callback) {
     // fetch all restaurants with proper error handling.
-    DBHelper.fetchRestaurants((error, restaurants) => {
-      if (error) {
-        callback(error, null);
-      } else {
-        const restaurant = restaurants.find(r => r.id == id);
-        if (restaurant) { // Got the restaurant
-          callback(null, restaurant);
-        } else { // Restaurant does not exist in the database
-          callback('Restaurant does not exist', null);
-        }
+    const idbRestaurant = idbApp.fetchRestaurantById(id);
+    idbRestaurant.then(function(idbRestaurantObject) {
+      if (idbRestaurantObject) {
+        console.log("GC: fetchRestaurantById from IndexedDB");
+        callback(null, idbRestaurantObject);
+        return;
+      }
+      else {
+        DBHelper.fetchRestaurants((error, restaurants) => {
+          if (error) {
+            callback(error, null);
+          } else {
+            const restaurant = restaurants.find(r => r.id == id);
+            if (restaurant) { // Got the restaurant
+              let idbMessages = idbApp.addRestaurantById(restaurant); // adding restaurant to IndexedDB
+              // console.log("idbMessages", idbMessages);
+              console.log("GC: fetchRestaurantById from network");
+              callback(null, restaurant);
+            } else { // Restaurant does not exist in the database
+              callback('Restaurant does not exist', null);
+            }
+          }
+        });
       }
     });
   }
@@ -147,7 +221,7 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    return (`/img/${restaurant.photograph}.jpg`);
+    return (`/img/${restaurant.id}.jpg`);
   }
 
   static altForRestaurant(restaurant) {
