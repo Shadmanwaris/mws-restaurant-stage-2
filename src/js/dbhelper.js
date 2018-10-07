@@ -225,7 +225,7 @@ class DBHelper {
   }
 
   static altForRestaurant(restaurant) {
-    return (`${restaurant.alternative}`);
+    return (`${restaurant.name}`);
   }
 
   /**

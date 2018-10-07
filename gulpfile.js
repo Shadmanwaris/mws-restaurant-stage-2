@@ -11,16 +11,22 @@ var paths = {
     srcCSS: 'src/**/*.css',
     srcJS: 'src/**/*.js',
     srcIMG: 'src/**/*.jpg',
+    srcICON: 'src/**/*.png',
+    srcJSON: 'src/**/*.json',
     tmp: 'tmp',
     tmpIndex: 'tmp/index.html',
     tmpCSS: 'tmp/**/*.css',
     tmpJS: 'tmp/**/*.js',
     tmpIMG: 'src/**/*.jpg',
+    tmpICON: 'src/**/*.png',
+    tmpJSON: 'src/**/*.json',
     dist: 'dist',
     distIndex: 'dist/index.html',
     distCSS: 'dist/**/*.css',
     distJS: 'dist/**/*.js',
     distIMG: 'src/**/*.jpg',
+    distICON: 'src/**/*.png',
+    distJSON: 'src/**/*.json',
   };
 
 gulp.task('default', function () {
@@ -43,7 +49,15 @@ gulp.task('img', function () {
     return gulp.src(paths.srcIMG).pipe(gulp.dest(paths.tmp));
 });
 
-gulp.task('copy', ['html', 'css', 'js', 'img']);
+gulp.task('icon', function () {
+    return gulp.src(paths.srcICON).pipe(gulp.dest(paths.tmp));
+});
+
+gulp.task('json', function () {
+    return gulp.src(paths.srcJSON).pipe(gulp.dest(paths.tmp));
+});
+
+gulp.task('copy', ['html', 'css', 'js', 'img', 'icon', 'json']);
 
 gulp.task('inject', ['copy'], function () {
     var css = gulp.src(paths.tmpCSS);
